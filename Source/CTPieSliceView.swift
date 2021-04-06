@@ -80,7 +80,7 @@ import UIKit
 }
 
 extension CTPieSliceView: CTPanoramaCompass {
-  public func trackOrientation(pitch: CGFloat, yaw: CGFloat) {
+  public func trackOrientation(pitch: CGFloat, yaw: CGFloat, roll: CGFloat) {
     
   }
   

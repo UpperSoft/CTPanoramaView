@@ -13,7 +13,7 @@ import ImageIO
 
 @objc public protocol CTPanoramaCompass {
   func updateUI(rotationAngle: CGFloat, fieldOfViewAngle: CGFloat)
-  func trackOrientation(pitch: CGFloat, yaw: CGFloat)
+  func trackOrientation(pitch: CGFloat, yaw: CGFloat, roll: CGFloat)
 }
 
 @objc public enum CTPanoramaControlMethod: Int {
@@ -228,7 +228,11 @@ import ImageIO
                 let rotationMatrix = motionData.attitude.rotationMatrix
                 var userHeading = .pi - atan2(rotationMatrix.m32, rotationMatrix.m31)
                 userHeading += .pi/2
-
+                                                    
+                let quaternion = motionData.attitude.quaternion
+                let pitch = CGFloat(atan2(2*(quaternion.x*quaternion.w + quaternion.y*quaternion.z), 1 - 2*pow(quaternion.x, 2) - 2*pow(quaternion.z, 2)))
+                let roll =  CGFloat(motionData.attitude.roll)
+                                                    
                 DispatchQueue.main.async {
                     if panoramaView.panoramaType == .cylindrical {
                         // Prevent vertical movement in a cylindrical panorama
@@ -237,8 +241,10 @@ import ImageIO
                         // Use quaternions when in spherical mode to prevent gimbal lock
                         panoramaView.cameraNode.orientation = motionData.orientation()
                     }
+                 
+                  
                     panoramaView.reportMovement(CGFloat(userHeading), panoramaView.xFov.toRadians())
-                  panoramaView.reportOrientation(CGFloat(motionData.attitude.roll), CGFloat(motionData.attitude.yaw))
+                  panoramaView.reportOrientation(pitch, CGFloat(userHeading), roll)
                 }
             })
         }
@@ -256,10 +262,11 @@ import ImageIO
         }
     }
   
-  private func reportOrientation(_ pitch: CGFloat, _ yaw: CGFloat) {
+  private func reportOrientation(_ pitch: CGFloat, _ yaw: CGFloat, _ roll: CGFloat) {
     let pitch = pitch * (180/CGFloat(Double.pi))
     let yaw = yaw * (180/CGFloat(Double.pi))
-    compass?.trackOrientation(pitch: pitch, yaw: yaw)
+    let roll = roll * (180/CGFloat(Double.pi))
+    compass?.trackOrientation(pitch: pitch, yaw: yaw, roll: roll)
   }
 
     // MARK: Gesture handling
